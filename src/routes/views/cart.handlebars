@@ -1,0 +1,22 @@
+<section id="contenedor-carrito">
+    <h2>Tu carrito de compras</h2>
+    
+    <div class="grilla-carrito">
+        {{#each products}}
+            <div class="carrito" style="margin-bottom: 15px;">
+                <img class="carrito-imagen" src="{{this.product.thumbnails.[0]}}" alt="{{this.product.title}}" style="height: 100px;">
+                <div class="carrito-detalles">
+                    <h3 class="carrito-titulo">{{this.product.title}}</h3>
+                    <p class="carrito-precio">Precio Unitario: ${{this.product.price}}</p>
+                    <div class="carrito-control-cantidad">
+                        <span class="carrito-cantidad">Cantidad: {{this.quantity}}</span>
+                    </div>
+                </div>
+            </div>
+        {{else}}
+            <p>Tu carrito está vacío, ¡ve a comprar algunos juegos de PS2!</p>
+        {{/each}}
+    </div>
+
+    <button class="boton-finalizar" style="margin-top: 20px;">Finalizar compra</button>
+</section>

@@ -1,0 +1,41 @@
+<section id="contenedor-catalogo">
+    <h2 class="titulo-principal">Catálogo de Juegos</h2>
+    
+    <div class="grilla-juegos">
+        {{#each payload}}
+            <div class="producto">
+                <img class="producto-imagen" src="{{this.thumbnails.[0]}}" alt="{{this.title}}">
+                <div class="producto-detalles">
+                    <h3 class="producto-titulo">{{this.title}}</h3>
+                    <p class="producto-precio">${{this.price}}</p>
+                    <p class="producto-stock">Quedan {{this.stock}}</p>
+                    
+                    <a href="/products/{{this._id}}" style="color: white; margin-bottom: 10px; display: block;">Ver detalle</a>
+                    
+                    <button class="boton-agregar" onclick="agregarAlCarrito('{{this._id}}')">Agregar al carrito</button>
+                </div>
+            </div>
+        {{else}}
+            <p>No hay juegos disponibles en esta página.</p>
+        {{/each}}
+    </div>
+
+    <div class="paginacion" style="margin-top: 20px; text-align: center;">
+        {{#if hasPrevPage}}
+            <a href="{{prevLink}}" style="color: white; margin-right: 15px;">⬅ Anterior</a>
+        {{/if}}
+        
+        <span>Página {{page}} de {{totalPages}}</span>
+        
+        {{#if hasNextPage}}
+            <a href="{{nextLink}}" style="color: white; margin-left: 15px;">Siguiente ➡</a>
+        {{/if}}
+    </div>
+</section>
+
+<script>
+    function agregarAlCarrito(pid) {
+        console.log("Pronto agregaremos el juego con ID: " + pid);
+        Swal.fire('¡En construcción!', 'Pronto se agregará al carrito', 'info');
+    }
+</script>
