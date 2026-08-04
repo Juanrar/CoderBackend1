@@ -27,10 +27,11 @@ Este es un proyecto final de curso: el objetivo del documento es que la IA **no 
 
 Proyecto final de curso: **API + aplicación web de e-commerce** desarrollada con Node.js y Express, con persistencia en MongoDB vía Mongoose, vistas del lado del servidor y actualización en tiempo real vía WebSockets. Es la versión final del proyecto que Juan Carlos viene desarrollando durante la cursada.
 
-- **Temática / nombre del proyecto:** _(a definir — confirmar con Juan Carlos el nombre, el problema que resuelve y el público objetivo, que la presentación pide explícitamente)_
-- **Repositorio:** _(a completar — URL de GitHub)_
+- **Temática / nombre del proyecto:** _sin confirmar formalmente_. El código apunta a una **tienda de videojuegos retro de PlayStation 2** (título de la página: "Tienda PS2 - Node.js", logo de PS2, catálogo con GTA: San Andreas y Resident Evil 4). Falta definir nombre comercial, problema que resuelve y público objetivo — los pide la slide 1.
+- **Repositorio:** https://github.com/Juanrar/CoderBackend1 (rama `main`).
 - **Entregable final:** Google Slides con URL pública _(a completar)_
-- **Estado:** el proyecto arranca desde la base construida durante la cursada (implementación previa con FileSystem, que **no se elimina**).
+- **Estado (04/08/2026):** maqueta de front funcionando (Express + Handlebars + Socket.IO levantando en 8080 con datos hardcodeados). **Todavía no existe ninguna API, ni conexión a MongoDB, ni modelos, ni DAO.** Ver sección 7 para la auditoría detallada.
+- **Nota sobre este archivo:** el original se llamaba `AGENT.md` y fue renombrado a `CLAUDE.md`; el borrado de `AGENT.md` todavía **no está commiteado**. Además existe una copia idéntica en `Escritorio\CLAUDE.md` (fuera del repo) que también se carga como instrucciones: si se edita una, hay que replicar en la otra o se desincronizan.
 
 ---
 
@@ -148,17 +149,18 @@ Proyecto final de curso: **API + aplicación web de e-commerce** desarrollada co
 ## 5. Checklist de progreso
 
 Leyenda: `[ ]` pendiente · `[~]` en progreso · `[x]` hecho.
+Estado verificado contra el código el **04/08/2026**.
 
 ### Fase 0 — Definición y setup
 
-- [ ] Confirmar nombre del proyecto, problema que resuelve y público objetivo (lo pide la sección 1 del Slides).
-- [ ] Repo de GitHub creado/actualizado, rama principal definida, commits claros.
-- [ ] `.gitignore` con `node_modules` y variables de entorno.
-- [ ] `package.json` con dependencias y scripts de arranque.
-- [ ] Servidor Express levantando en el **puerto 8080**.
-- [ ] Estructura de carpetas definida, incluyendo **`dao`** y **`models`**.
-- [ ] Conexión a MongoDB (base **`ecommerce`**) verificada.
-- [ ] Decidir dónde vive la implementación previa de **FileSystem** para conservarla sin romper la nueva.
+- [~] Confirmar nombre del proyecto, problema que resuelve y público objetivo (lo pide la sección 1 del Slides). → temática implícita (juegos de PS2), sin definición escrita.
+- [x] Repo de GitHub creado/actualizado, rama principal definida, commits claros. → `Juanrar/CoderBackend1`, rama `main`, commits con prefijos convencionales (`feat:`, `chore:`).
+- [~] `.gitignore` con `node_modules` y variables de entorno. → solo ignora `node_modules`; **falta `.env`**.
+- [~] `package.json` con dependencias y scripts de arranque. → existe con script `dev` (`nodemon src/app.js`); falta `start`, y hay dependencias basura (ver sección 7, hallazgo 4).
+- [x] Servidor Express levantando en el **puerto 8080**. → `src/app.js:21`.
+- [~] Estructura de carpetas definida, incluyendo **`dao`** y **`models`**. → existen `src/dao/` y `src/model/`, pero **vacías** y la segunda **en singular** (la consigna pide `models`). Al estar vacías, git no las versiona: no llegan al remoto.
+- [ ] Conexión a MongoDB (base **`ecommerce`**) verificada. → `mongoose` está instalado pero **nunca se importa ni se conecta** en ningún archivo.
+- [ ] Decidir dónde vive la implementación previa de **FileSystem** para conservarla sin romper la nueva. → **no hay rastro de FileSystem en el repo** (ver sección 7, hallazgo 3).
 
 ### Fase 1 — Modelado y persistencia
 
@@ -169,6 +171,8 @@ Leyenda: `[ ]` pendiente · `[~]` en progreso · `[x]` hecho.
 - [ ] Implementación de FileSystem conservada y funcional/documentada.
 
 ### Fase 2 — API de productos
+
+> Estado: **no existe `src/routes/products.router.js` ni ninguna ruta bajo `/api`.** Toda la fase está pendiente.
 
 - [ ] Router de `/api/products` con **Express Router**.
 - [ ] `GET /api/products` con `limit` (default 10) y `page` (default 1).
@@ -182,6 +186,8 @@ Leyenda: `[ ]` pendiente · `[~]` en progreso · `[x]` hecho.
 
 ### Fase 3 — API de carritos
 
+> Estado: **no existe `src/routes/carts.router.js`.** Toda la fase está pendiente.
+
 - [ ] Router de `/api/carts` con **Express Router**.
 - [ ] `POST /api/carts` con ID autogenerado.
 - [ ] `GET /api/carts/:cid` con **`populate`**.
@@ -193,20 +199,20 @@ Leyenda: `[ ]` pendiente · `[~]` en progreso · `[x]` hecho.
 
 ### Fase 4 — Vistas
 
-- [ ] Motor de vistas configurado y capa de rutas de vistas separada de la API.
-- [ ] `/products` — listado con paginación funcionando (navegación entre páginas).
-- [ ] `/products/:pid` — detalle del producto con opción de agregar al carrito.
-- [ ] `/carts/:cid` — visualización del carrito con sus productos.
+- [x] Motor de vistas configurado y capa de rutas de vistas separada de la API. → `express-handlebars` en `src/app.js:15-17`, layout `main.handlebars`, rutas en `src/routes/views.router.js`. (La separación todavía es trivial: no hay API con la cual mezclarse.)
+- [~] `/products` — listado con paginación funcionando (navegación entre páginas). → la ruta renderiza un **array hardcodeado de 2 juegos** (`views.router.js:13-28`). La vista `products.handlebars` ya tiene el marcado de paginación (`hasPrevPage`, `prevLink`, `page`, `totalPages`), pero el router **no le pasa ninguna de esas variables**, así que los controles nunca se muestran.
+- [ ] `/products/:pid` — detalle del producto con opción de agregar al carrito. → la vista linkea a `/products/{{_id}}` pero **esa ruta no existe**: el link da 404. El botón "Agregar al carrito" es un placeholder con SweetAlert.
+- [ ] `/carts/:cid` — visualización del carrito con sus productos. → la vista `cart.handlebars` existe y ya está escrita esperando `products[].product` + `quantity` (compatible con `populate`), pero **ninguna ruta la renderiza**. El navbar apunta al literal `/carts/TU_ID_DE_CARRITO_AQUI`.
 
 ### Fase 5 — Tiempo real (WebSockets)
 
-- [ ] WebSockets integrados al servidor.
+- [~] WebSockets integrados al servidor. → `socket.io` server montado sobre el servidor HTTP (`app.js:25-29`) y cliente cargado en el layout + `src/public/index.js`. Hoy solo hace el handshake y emite un `'saludo'` de prueba que el cliente ni siquiera escucha.
 - [ ] Los cambios en productos se reflejan automáticamente en la vista sin recargar.
 - [ ] Evidencia grabada del comportamiento en tiempo real (GIF o video).
 
 ### Fase 6 — Calidad de código y entrega
 
-- [ ] **Middlewares** en uso (al menos los propios del proyecto, más el manejo de errores).
+- [~] **Middlewares** en uso (al menos los propios del proyecto, más el manejo de errores). → están `express.json`, `express.urlencoded` y `express.static`; **falta el middleware de manejo de errores** y cualquier middleware propio.
 - [ ] Toda la asincronía con `async`/`await` y con manejo de errores.
 - [ ] Manejo básico de errores consistente (status HTTP coherentes, mensajes claros, IDs inválidos o inexistentes).
 - [ ] Código modular: sin lógica de negocio dentro de los routers, sin duplicación evidente.
@@ -233,16 +239,75 @@ Leyenda: `[ ]` pendiente · `[~]` en progreso · `[x]` hecho.
 - `GET /api/carts/:cid` debe usar **`populate`** (esto condiciona el modelado del carrito: guarda referencias, no copias del producto).
 - La entrega es un **Google Slides público**; el repo es respaldo, no lo evaluado directamente.
 
+### Decisiones ya tomadas (deducidas del código, confirmadas el 04/08/2026)
+
+- **Motor de plantillas:** `express-handlebars` v8, con layout `main.handlebars` y vistas en `src/views/`.
+- **Librería de WebSockets:** `socket.io` v4, montado sobre el servidor que devuelve `app.listen()`.
+- **Módulos ES:** `"type": "module"` en `package.json` → se usa `import`/`export`, no `require`.
+- **Arranque:** `npm run dev` con nodemon sobre `src/app.js`.
+- **Convención de commits:** prefijos tipo Conventional Commits (`feat:`, `chore:`), ya usados de forma consistente.
+- **Temática (implícita):** catálogo de videojuegos de PlayStation 2.
+
 ### Decisiones pendientes (a resolver con Juan Carlos, no asumir)
 
-- [ ] **Nombre y temática concreta del e-commerce** (rubro, catálogo, público objetivo) — pendiente.
-- [ ] **Motor de plantillas para las vistas**: la consigna exige las vistas pero **no especifica cuál usar** — pendiente de definir.
-- [ ] **Librería de WebSockets**: la consigna pide "WebSockets" sin nombrar una implementación — pendiente de definir.
-- [ ] **Estrategia de paginación**: la consigna define el formato de salida pero no cómo producirlo (query manual vs. librería de paginación) — pendiente de definir.
-- [ ] **Arquitectura de capas**: la consigna menciona `dao` y `models` y habla de "controllers" en el Slides; el reparto exacto de responsabilidades (router / controller / service / dao) queda por definir.
-- [ ] **Cómo convive FileSystem con MongoDB** (dos DAOs seleccionables, o FileSystem conservado como implementación histórica) — pendiente de definir.
-- [ ] **Convenciones de código** (nomenclatura, formato de respuestas de error, estructura de commits) — a documentar acá cuando se decidan.
+- [ ] **Nombre comercial, problema que resuelve y público objetivo** del e-commerce — la temática está clara (juegos de PS2), la definición para la slide 1 no.
+- [ ] **Estrategia de paginación**: `mongoose-paginate-v2` está **instalado** pero todavía no se usa; falta decidir entre ese plugin (devuelve casi todas las claves del formato exigido) o armar la query a mano. Ojo: ni el plugin ni Mongo generan `prevLink`/`nextLink` — esos se arman siempre a mano.
+- [ ] **Arquitectura de capas**: la consigna menciona `dao` y `models` y habla de "controllers" en el Slides; el reparto exacto de responsabilidades (router / controller / service / dao) queda por definir. Hoy no hay ninguna capa: `views.router.js` tiene los datos hardcodeados adentro.
+- [ ] **Cómo convive FileSystem con MongoDB** (dos DAOs seleccionables, o FileSystem conservado como implementación histórica) — pendiente, y además hay que **recuperar** esa implementación (hallazgo 3).
+- [ ] **Manejo de la URI de Mongo**: local vs. Atlas, y si va por `.env` (haría falta agregar `dotenv` o usar `--env-file` de Node) o hardcodeada. La rúbrica penaliza credenciales en el código.
+- [ ] **Convenciones de respuestas de error** (forma del JSON de error, códigos HTTP por caso) — a documentar acá cuando se decidan.
+
+---
+
+## 7. Auditoría del repositorio (04/08/2026)
+
+### Estructura actual
+
+```
+CoderBackend1/
+├─ .gitignore              (solo node_modules)
+├─ CLAUDE.md               (este archivo, sin commitear; AGENT.md borrado sin commitear)
+├─ README.md
+├─ package.json
+└─ src/
+   ├─ app.js               servidor + handlebars + socket.io, todo junto
+   ├─ dao/                 VACÍA
+   ├─ model/               VACÍA — y en singular
+   ├─ routes/
+   │  └─ views.router.js   GET / y GET /products (datos hardcodeados)
+   ├─ public/
+   │  ├─ index.js          solo `const socket = io()`
+   │  ├─ css/styles.css
+   │  └─ assets/logo.png
+   └─ views/
+      ├─ layouts/main.handlebars
+      ├─ home.handlebars
+      ├─ products.handlebars
+      └─ cart.handlebars   (sin ruta que la renderice)
+```
+
+### Hallazgos, ordenados por impacto en la nota
+
+1. **No hay persistencia (bloqueante, 25% + habilita el otro 50%).** `mongoose` figura en `package.json` pero no se importa en ningún archivo: no hay `connect`, no hay esquemas, no hay base `ecommerce`. Todo lo demás (API, `populate`, paginación, tiempo real con datos reales) depende de esto.
+2. **No existe la API (50% de la nota).** No hay routers `/api/products` ni `/api/carts`; `app.js` solo monta `viewsRouter` en `/`. Los 13 endpoints de la consigna están sin escribir.
+3. **La implementación previa con FileSystem no está en el repo (requisito 20, incumplible si no aparece).** El commit `95eb629 "Adapt code from other project"` sugiere que el código vino de otro repo, pero el `ProductManager`/`CartManager` con `fs` no se copió. Hay que recuperarlo del repo de la entrega anterior antes de seguir, porque la consigna exige explícitamente que **siga existiendo**.
+4. **Dependencias basura en `package.json`.** Están instaladas `paginate@0.2.0` y `v2@0.0.3`: casi con seguridad el resultado de escribir `npm i mongoose-paginate v2` en vez de `npm i mongoose-paginate-v2`. Además `nodemon` está en `dependencies` cuando corresponde a `devDependencies`. Todo esto se ve en las capturas del Slides.
+5. **`src/model/` debería llamarse `models/`** (la consigna lo nombra en plural y es criterio explícito de la rúbrica). Ambas carpetas están vacías, así que **git no las versiona**: quien clone el repo no las ve. Se arregla solo cuando tengan archivos adentro.
+6. **Versiones muy nuevas del stack.** Express **5.2** y Mongoose **9** — la mayoría del material del curso asume Express 4 y Mongoose 6/7/8. Diferencias que van a morder: en Express 5 los comodines de ruta cambiaron (`*` ya no es válido, va `/*splat`), `req.query` es un getter de solo lectura, y los errores de un handler `async` que rechaza **sí** llegan al middleware de errores (en Express 4 no).
+7. **Links rotos en las vistas.** `products.handlebars:13` apunta a `/products/{{_id}}` (ruta inexistente → 404) y `main.handlebars:18` apunta al literal `/carts/TU_ID_DE_CARRITO_AQUI`.
+8. **Datos de debug visibles.** `code: '200 papa'` se pasa a las vistas, y el footer dice "© 2026 Llego el mono PAPA SRA". Limpiar **antes** de sacar las capturas del Slides.
+9. **Todo mezclado en `app.js`.** Config de Express + Handlebars + arranque del servidor + lógica de sockets en un solo archivo, y datos de negocio dentro del router. La rúbrica pide "código modular". Conviene separar arranque, configuración y sockets antes de que crezca.
+10. **Rutas relativas al cwd.** `express.static('src/public')` y `app.set('views', './src/views')` funcionan solo si el proceso se arranca desde la raíz del proyecto. Con módulos ES lo robusto es resolver rutas absolutas desde `import.meta.dirname` (Node 20.11+) o `fileURLToPath(import.meta.url)`.
+11. **Sin manejo de errores.** Ningún `try/catch` en los handlers, ningún middleware de error de 4 argumentos, ningún caso borde contemplado (ID inválido, producto inexistente).
+12. **`.gitignore` no cubre `.env`.** Arreglarlo *antes* de crear el archivo, no después: si se commitea una vez, la credencial queda en el historial.
+
+### Lo que ya está bien y conviene no romper
+
+- El servidor levanta en **8080**, como exige la consigna.
+- `cart.handlebars` ya está escrita esperando `{{#each products}}` con `this.product.title` y `this.quantity`: esa forma es **exactamente** la que produce un carrito con `populate`. El modelo del carrito debería respetarla.
+- `products.handlebars` ya consume `payload`, `page`, `totalPages`, `hasPrevPage`, `hasNextPage`, `prevLink`, `nextLink`: los mismos nombres del formato de respuesta obligatorio. Buena decisión, mantenerla.
+- El historial de commits es prolijo y con mensajes descriptivos.
 
 ### Registro de sesiones
 
-_(vacío — se completa a medida que Juan Carlos avance)_
+- **04/08/2026** — Auditoría inicial del repo y actualización de este documento (secciones 1, 5, 6 y esta). Estado: front maquetado con datos falsos; persistencia y API sin empezar. Próximo paso acordado: recuperar la implementación de FileSystem y levantar la capa de datos con Mongoose.
