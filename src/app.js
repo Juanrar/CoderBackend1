@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import { Server } from 'socket.io';
 import { engine } from 'express-handlebars';
 import viewsRouter from './routes/views.router.js'
@@ -28,3 +29,7 @@ socketServer.on('connection', (socket) => {
     console.log('Se conectó alguien por websocket:', socket.id);
     socket.emit('saludo', 'Te saludo desde muy lejos');
 });
+
+mongoose.connect('mongodb://127.0.0.1:27017/ecommerce')
+    .then(() => console.log('MongoDB conectado'))
+    .catch(err => console.log('Error al conectar a Mongo:', err));
