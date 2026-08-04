@@ -2,6 +2,12 @@ import { Router } from 'express';
 
 const router = Router();
 
+router.get('/', async(req, res) => {
+    res.render('home', { 
+        code: '200 papa'
+    });
+})
+
 router.get('/products', async (req, res) => {
     
     const testProducts = [

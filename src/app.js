@@ -18,11 +18,13 @@ app.set('views', './src/views');
 
 app.use('/', viewsRouter);
 
+
 const serverExp = app.listen(8080, () => {
     console.log("Servidor ON en puerto 8080");
 });
 
 const socketServer = new Server(serverExp);
 socketServer.on('connection', (socket) => {
-    console.log("Se conectó alguien por websocket: ", socket.id);
+    console.log('Se conectó alguien por websocket:', socket.id);
+    socket.emit('saludo', 'Te saludo desde muy lejos');
 });
