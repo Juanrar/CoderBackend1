@@ -30,8 +30,8 @@ Proyecto final de curso: **API + aplicación web de e-commerce** desarrollada co
 - **Temática / nombre del proyecto:** _sin confirmar formalmente_. El código apunta a una **tienda de videojuegos retro de PlayStation 2** (título de la página: "Tienda PS2 - Node.js", logo de PS2, catálogo con GTA: San Andreas y Resident Evil 4). Falta definir nombre comercial, problema que resuelve y público objetivo — los pide la slide 1.
 - **Repositorio:** https://github.com/Juanrar/CoderBackend1 (rama `main`).
 - **Entregable final:** Google Slides con URL pública _(a completar)_
-- **Estado (04/08/2026):** maqueta de front funcionando (Express + Handlebars + Socket.IO levantando en 8080 con datos hardcodeados). **Todavía no existe ninguna API, ni conexión a MongoDB, ni modelos, ni DAO.** Ver sección 7 para la auditoría detallada.
-- **Nota sobre este archivo:** el original se llamaba `AGENT.md` y fue renombrado a `CLAUDE.md`; el borrado de `AGENT.md` todavía **no está commiteado**. Además existe una copia idéntica en `Escritorio\CLAUDE.md` (fuera del repo) que también se carga como instrucciones: si se edita una, hay que replicar en la otra o se desincronizan.
+- **Estado (10/08/2026):** maqueta de front funcionando (Express + Handlebars + Socket.IO levantando en 8080 con datos hardcodeados). Arrancó la persistencia: hay un primer modelo de Mongoose (`src/models/product.model.js`) y `app.js` ya llama a `mongoose.connect(...)`, pero **ninguno de los dos cambios está commiteado todavía** y sigue sin existir la API (`/api/products`, `/api/carts`) ni la capa `dao` (la carpeta existe pero sigue vacía). Ver sección 7 para la auditoría detallada.
+- **Nota sobre este archivo:** el archivo se llamaba `AGENT.md` y fue renombrado a `CLAUDE.md` en el commit `1eca14d` — el renombre **sí está commiteado**, a diferencia de lo que decía una versión anterior de esta nota. Tampoco se encontró ya una copia duplicada en `Escritorio\CLAUDE.md`: si existió, ya no está.
 
 ---
 
@@ -149,7 +149,7 @@ Proyecto final de curso: **API + aplicación web de e-commerce** desarrollada co
 ## 5. Checklist de progreso
 
 Leyenda: `[ ]` pendiente · `[~]` en progreso · `[x]` hecho.
-Estado verificado contra el código el **04/08/2026**.
+Estado verificado contra el código el **10/08/2026**.
 
 ### Fase 0 — Definición y setup
 
@@ -157,14 +157,14 @@ Estado verificado contra el código el **04/08/2026**.
 - [x] Repo de GitHub creado/actualizado, rama principal definida, commits claros. → `Juanrar/CoderBackend1`, rama `main`, commits con prefijos convencionales (`feat:`, `chore:`).
 - [~] `.gitignore` con `node_modules` y variables de entorno. → solo ignora `node_modules`; **falta `.env`**.
 - [~] `package.json` con dependencias y scripts de arranque. → existe con script `dev` (`nodemon src/app.js`); falta `start`, y hay dependencias basura (ver sección 7, hallazgo 4).
-- [x] Servidor Express levantando en el **puerto 8080**. → `src/app.js:21`.
-- [~] Estructura de carpetas definida, incluyendo **`dao`** y **`models`**. → existen `src/dao/` y `src/model/`, pero **vacías** y la segunda **en singular** (la consigna pide `models`). Al estar vacías, git no las versiona: no llegan al remoto.
-- [ ] Conexión a MongoDB (base **`ecommerce`**) verificada. → `mongoose` está instalado pero **nunca se importa ni se conecta** en ningún archivo.
+- [x] Servidor Express levantando en el **puerto 8080**. → `src/app.js:29`.
+- [~] Estructura de carpetas definida, incluyendo **`dao`** y **`models`**. → `src/models/` ya existe **en plural** (correcto según consigna) con un primer archivo, `product.model.js`. `src/dao/` sigue vacía. Como `models/` ya tiene contenido, `git status` la detecta como carpeta nueva (`??`), pero **todavía no está agregada ni commiteada**.
+- [~] Conexión a MongoDB (base **`ecommerce`**) verificada. → `app.js` ya tiene `mongoose.connect('mongodb://127.0.0.1:27017/ecommerce')` con `.then`/`.catch`, pero es un cambio **sin commitear** (`git status` lo marca `modified`) y todavía no se confirmó levantando el server con Mongo corriendo. Falta: commitear y verificar en consola/Compass que la conexión funciona y que la base `ecommerce` se crea.
 - [ ] Decidir dónde vive la implementación previa de **FileSystem** para conservarla sin romper la nueva. → **no hay rastro de FileSystem en el repo** (ver sección 7, hallazgo 3).
 
 ### Fase 1 — Modelado y persistencia
 
-- [ ] Modelo de **producto** en Mongoose con los campos exigidos (`title`, `description`, `code`, `price`, `status`, `stock`, `category`, `thumbnails`).
+- [~] Modelo de **producto** en Mongoose con los campos exigidos (`title`, `description`, `code`, `price`, `status`, `stock`, `category`, `thumbnails`). → escrito en `src/models/product.model.js`, con los 8 campos pedidos más `developer` y `releaseYear` (extra, vienen de los datos semilla) y `status` como `Boolean` con `default: true`. Sin commitear todavía; falta usarlo desde un router o dao para comprobar que funciona de punta a punta.
 - [ ] Modelo de **carrito** en Mongoose, con referencia a productos que habilite `populate`.
 - [ ] Colecciones `products` y `carts` creadas y con datos de prueba.
 - [ ] Capa **`dao`** implementada (acceso a datos separado de la lógica de rutas).
@@ -199,14 +199,14 @@ Estado verificado contra el código el **04/08/2026**.
 
 ### Fase 4 — Vistas
 
-- [x] Motor de vistas configurado y capa de rutas de vistas separada de la API. → `express-handlebars` en `src/app.js:15-17`, layout `main.handlebars`, rutas en `src/routes/views.router.js`. (La separación todavía es trivial: no hay API con la cual mezclarse.)
+- [x] Motor de vistas configurado y capa de rutas de vistas separada de la API. → `express-handlebars` en `src/app.js:17-19`, layout `main.handlebars`, rutas en `src/routes/views.router.js`. (La separación todavía es trivial: no hay API con la cual mezclarse.)
 - [~] `/products` — listado con paginación funcionando (navegación entre páginas). → la ruta renderiza un **array hardcodeado de 2 juegos** (`views.router.js:13-28`). La vista `products.handlebars` ya tiene el marcado de paginación (`hasPrevPage`, `prevLink`, `page`, `totalPages`), pero el router **no le pasa ninguna de esas variables**, así que los controles nunca se muestran.
 - [ ] `/products/:pid` — detalle del producto con opción de agregar al carrito. → la vista linkea a `/products/{{_id}}` pero **esa ruta no existe**: el link da 404. El botón "Agregar al carrito" es un placeholder con SweetAlert.
 - [ ] `/carts/:cid` — visualización del carrito con sus productos. → la vista `cart.handlebars` existe y ya está escrita esperando `products[].product` + `quantity` (compatible con `populate`), pero **ninguna ruta la renderiza**. El navbar apunta al literal `/carts/TU_ID_DE_CARRITO_AQUI`.
 
 ### Fase 5 — Tiempo real (WebSockets)
 
-- [~] WebSockets integrados al servidor. → `socket.io` server montado sobre el servidor HTTP (`app.js:25-29`) y cliente cargado en el layout + `src/public/index.js`. Hoy solo hace el handshake y emite un `'saludo'` de prueba que el cliente ni siquiera escucha.
+- [~] WebSockets integrados al servidor. → `socket.io` server montado sobre el servidor HTTP (`app.js:33-37`) y cliente cargado en el layout + `src/public/index.js`. Hoy solo hace el handshake y emite un `'saludo'` de prueba que el cliente ni siquiera escucha.
 - [ ] Los cambios en productos se reflejan automáticamente en la vista sin recargar.
 - [ ] Evidencia grabada del comportamiento en tiempo real (GIF o video).
 
@@ -264,22 +264,24 @@ Estado verificado contra el código el **04/08/2026**.
 
 ## 7. Auditoría del repositorio (04/08/2026)
 
-### Estructura actual
+### Estructura actual (10/08/2026)
 
 ```
 CoderBackend1/
-├─ .gitignore              (solo node_modules)
-├─ CLAUDE.md               (este archivo, sin commitear; AGENT.md borrado sin commitear)
+├─ .gitignore              (solo node_modules; falta .env)
+├─ CLAUDE.md
 ├─ README.md
-├─ package.json
+├─ package.json            (dependencias limpias; falta script "start")
 └─ src/
-   ├─ app.js               servidor + handlebars + socket.io, todo junto
+   ├─ app.js               servidor + handlebars + mongoose.connect + socket.io, todo junto
+   │                        (mongoose.connect es cambio SIN COMMITEAR)
    ├─ dao/                 VACÍA
-   ├─ model/               VACÍA — y en singular
+   ├─ models/               ← ya en plural
+   │  └─ product.model.js  esquema de producto (SIN COMMITEAR, carpeta untracked)
    ├─ routes/
    │  └─ views.router.js   GET / y GET /products (datos hardcodeados)
    ├─ public/
-   │  ├─ index.js          solo `const socket = io()`
+   │  ├─ index.js          solo `const socket = io()` + placeholder de agregar al carrito
    │  ├─ css/styles.css
    │  └─ assets/logo.png
    └─ views/
@@ -291,12 +293,12 @@ CoderBackend1/
 
 ### Hallazgos, ordenados por impacto en la nota
 
-1. **No hay persistencia (bloqueante, 25% + habilita el otro 50%).** `mongoose` figura en `package.json` pero no se importa en ningún archivo: no hay `connect`, no hay esquemas, no hay base `ecommerce`. Todo lo demás (API, `populate`, paginación, tiempo real con datos reales) depende de esto.
+1. **Persistencia arrancó, pero sin commitear (bloqueante, 25% + habilita el otro 50%).** Ya existen `mongoose.connect(...)` en `app.js` y un primer esquema en `src/models/product.model.js`, pero ambos cambios están **sin agregar a git** (`git status`: `app.js` modificado, `src/models/` sin trackear). Falta: (a) commitear, (b) confirmar que la conexión levanta contra un Mongo corriendo y crea la base `ecommerce`, (c) escribir el modelo de **carrito** (todavía no existe), (d) construir la capa `dao` sobre estos modelos — la carpeta sigue vacía.
 2. **No existe la API (50% de la nota).** No hay routers `/api/products` ni `/api/carts`; `app.js` solo monta `viewsRouter` en `/`. Los 13 endpoints de la consigna están sin escribir.
 3. **La implementación previa con FileSystem NO EXISTE (requisito 20).** Verificado el 04/08/2026: el "otro proyecto" del commit `95eb629` es `CODER/CoderJavaScript`, que es el **proyecto de frontend** del curso de JavaScript — HTML + CSS + `js/main.js` de navegador, con persistencia en `localStorage`. No tiene Node, ni `require`, ni `fs`, ni Express. De ahí salieron las vistas, el CSS y el logo, nada más. Tampoco hay ningún `ProductManager`/`CartManager` en el resto del disco ni en otra rama. **Conclusión: el `ProductManager` con `fs` hay que escribirlo desde cero.**
    - **Dato aprovechable:** `CoderJavaScript/data/juegos.json` tiene **10 juegos de PS2** con `id`, `titulo`, `categorias`, `precio`, `stock`, `descripcion`, `desarrollador`, `año_lanzamiento`, `imagen_url`. Categorías: Mundo Abierto, Horror, Aventura, Acción, Sigilo, RPG, Carreras. Sirve como semilla tanto para el FileSystem como para la colección `products`, **pero los nombres de campo están en español y no coinciden con los que exige la consigna** — hay que mapearlos (`titulo`→`title`, `precio`→`price`, `imagen_url`→`thumbnails` como *array*, `categorias`→`category`, `id`→`code`) y **falta `status`**. Son 10 documentos: para que la paginación con `limit=10` se note en las capturas conviene llegar a 15-20.
-4. **Dependencias basura en `package.json`.** Están instaladas `paginate@0.2.0` y `v2@0.0.3`: casi con seguridad el resultado de escribir `npm i mongoose-paginate v2` en vez de `npm i mongoose-paginate-v2`. Además `nodemon` está en `dependencies` cuando corresponde a `devDependencies`. Todo esto se ve en las capturas del Slides.
-5. **`src/model/` debería llamarse `models/`** (la consigna lo nombra en plural y es criterio explícito de la rúbrica). Ambas carpetas están vacías, así que **git no las versiona**: quien clone el repo no las ve. Se arregla solo cuando tengan archivos adentro.
+4. ~~**Dependencias basura en `package.json`.**~~ **RESUELTO.** Ya no están `paginate`/`v2`; queda solo `mongoose-paginate-v2` (todavía sin usar en código) y `nodemon` pasó a `devDependencies`. Sigue faltando el script `start` (solo existe `dev`).
+5. ~~**`src/model/` debería llamarse `models/`**~~ **RESUELTO.** Ahora es `src/models/` (plural, como pide la consigna) y ya tiene `product.model.js` adentro. Pendiente: commitear (hoy figura como carpeta sin trackear) y sumar el modelo de carrito. `src/dao/` sigue vacía y sin versionar.
 6. **Versiones muy nuevas del stack.** ~~Express **5.2** y Mongoose **9**~~ — **DECIDIDO el 04/08/2026: se baja a Express 4 + Mongoose 8** para alinearse con el material del curso y con `mongoose-paginate-v2`, que no declara compatibilidad con Mongoose 9 y es central para el endpoint que vale el 50%. Si en algún momento se vuelve a Express 5, tener presente: los comodines de ruta cambian (`*` ya no es válido, va `/*splat`), `req.query` pasa a ser un getter de solo lectura, `req.param()` desaparece, y los errores de un handler `async` que rechaza **sí** llegan solos al middleware de errores (en Express 4 hay que capturarlos y pasarlos a `next`).
 7. **Links rotos en las vistas.** `products.handlebars:13` apunta a `/products/{{_id}}` (ruta inexistente → 404) y `main.handlebars:18` apunta al literal `/carts/TU_ID_DE_CARRITO_AQUI`.
 8. **Datos de debug visibles.** `code: '200 papa'` se pasa a las vistas, y el footer dice "© 2026 Llego el mono PAPA SRA". Limpiar **antes** de sacar las capturas del Slides.
@@ -316,3 +318,4 @@ CoderBackend1/
 
 - **04/08/2026** — Auditoría inicial del repo y actualización de este documento (secciones 1, 5, 6 y esta). Estado: front maquetado con datos falsos; persistencia y API sin empezar.
 - **04/08/2026 (cont.)** — Se verificó que `CoderJavaScript` es el proyecto de **frontend** del curso de JS, no un backend: **la implementación con FileSystem nunca existió** y hay que escribirla. Se rescató `data/juegos.json` como semilla. Decisión tomada: **bajar a Express 4 + Mongoose 8**. Plan de trabajo acordado: (1) limpiar dependencias, (2) downgrade de versiones, (3) escribir `ProductManager` con `fs.promises` sobre los datos semilla.
+- **10/08/2026** — Nueva auditoría completa contra el estado real del repo (código + `git status` + `git log`), no solo contra lo que decía este documento. Cambios de código detectados, **todavía sin commitear**: `src/model/` fue reemplazado por `src/models/` (ya en plural) con el primer esquema (`product.model.js`, cubre los 8 campos de la consigna más `developer`/`releaseYear`); `app.js` ya llama a `mongoose.connect('mongodb://127.0.0.1:27017/ecommerce')`. Se corrigieron dos notas desactualizadas de este archivo: el renombre `AGENT.md` → `CLAUDE.md` **sí** está commiteado (`1eca14d`), y no se encontró copia duplicada en `Escritorio\CLAUDE.md`. También se confirmó que `package.json` ya no tiene las dependencias basura (`paginate`, `v2`) y que `nodemon` quedó bien ubicado en `devDependencies`. Sin cambios en la API (sigue sin existir ningún router bajo `/api`), en las vistas (siguen con datos hardcodeados y links rotos) ni en WebSockets (sigue solo el saludo de prueba). Próximo paso sugerido: commitear el modelo y la conexión, verificar que Mongo levanta de verdad, y recién después arrancar la capa `dao` y el router de `/api/products`.
