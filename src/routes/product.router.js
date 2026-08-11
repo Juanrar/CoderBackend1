@@ -7,6 +7,6 @@ router.get('/', ProductoController.getAll)
 router.get('/:id', ProductoController.getById)
 router.post('/', ProductoController.create)
 router.delete('/:id', ProductoController.delete)
-router.patch('/:id', ProductoController.update)
+router.put('/:id', ProductoController.update)
 
 export default router;

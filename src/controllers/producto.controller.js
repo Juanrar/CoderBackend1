@@ -105,7 +105,11 @@ export class ProductoController{
 
     static async update(req, res) {
         const { id } = req.params;
-        const updateData = req.body;
+        const updateData = {...req.body};
+
+        delete updateData._id;
+        delete updateData.id
+        delete updateData.code; 
         
         try {
             if (Object.keys(updateData).length === 0) {
