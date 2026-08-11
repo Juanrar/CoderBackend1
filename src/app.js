@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { Server } from 'socket.io';
 import { engine } from 'express-handlebars';
 import viewsRouter from './routes/views.router.js'
+import productsRouter from './routes/product.router.js'
 
 const app =  express();
 
@@ -23,8 +24,12 @@ mongoose.connect('mongodb://127.0.0.1:27017/ecommerce')
     .then(() => console.log('MongoDB conectado'))
     .catch(err => console.log('Error al conectar a Mongo:', err));
 
+
+// Rutas Vistas
 app.use('/', viewsRouter);
 
+// Rutas Producto
+ app.use('/api/products', productsRouter)
 
 const serverExp = app.listen(8080, () => {
     console.log("Servidor ON en puerto 8080");

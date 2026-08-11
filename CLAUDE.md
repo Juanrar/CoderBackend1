@@ -164,25 +164,29 @@ Estado verificado contra el código el **10/08/2026**.
 
 ### Fase 1 — Modelado y persistencia
 
-- [~] Modelo de **producto** en Mongoose con los campos exigidos (`title`, `description`, `code`, `price`, `status`, `stock`, `category`, `thumbnails`). → escrito en `src/models/product.model.js`, con los 8 campos pedidos más `developer` y `releaseYear` (extra, vienen de los datos semilla) y `status` como `Boolean` con `default: true`. Sin commitear todavía; falta usarlo desde un router o dao para comprobar que funciona de punta a punta.
+- [x] Modelo de **producto** en Mongoose con los campos exigidos (`title`, `description`, `code`, `price`, `status`, `stock`, `category`, `thumbnails`). → escrito en `src/models/product.model.js` como `ProductoModel` (export con nombre), con los 8 campos pedidos más `developer` y `releaseYear` (extra, vienen de los datos semilla) y `status` como `Boolean` con `default: true`. Ya confirmado funcionando de punta a punta vía `GET /api/products`. Sin commitear todavía.
 - [ ] Modelo de **carrito** en Mongoose, con referencia a productos que habilite `populate`.
-- [ ] Colecciones `products` y `carts` creadas y con datos de prueba.
-- [ ] Capa **`dao`** implementada (acceso a datos separado de la lógica de rutas).
+- [~] Colecciones `products` y `carts` creadas y con datos de prueba. → `products` ya tiene datos reales (se están leyendo desde `GET /api/products`); `carts` todavía no existe.
+- [x] Capa **`dao`** implementada (acceso a datos separado de la lógica de rutas). → `src/dao/product.dao.js`, clase `ProductoDao` que recibe el modelo por constructor. Falta el dao de carritos.
+- [x] Capa **`controllers`** implementada (decidido usar 3 capas — ver sección 6). → `src/controllers/producto.controller.js`, clase `ProductoController`. Falta el controller de carritos.
 - [ ] Implementación de FileSystem conservada y funcional/documentada.
 
 ### Fase 2 — API de productos
 
-> Estado: **no existe `src/routes/products.router.js` ni ninguna ruta bajo `/api`.** Toda la fase está pendiente.
+> Estado (10/08/2026): **arrancó de punta a punta.** Cadena completa `product.router.js` → `producto.controller.js` (`ProductoController`) → `product.dao.js` (`ProductoDao`) → `product.model.js` (`ProductoModel`) → Mongo, montada en `app.js` bajo `/api/products`. `GET /api/products` (versión básica, sin filtros/paginación todavía) ya devuelve datos reales de la colección. Nada de esto está commiteado todavía.
 
-- [ ] Router de `/api/products` con **Express Router**.
+- [x] Router de `/api/products` con **Express Router**. → `src/routes/product.router.js` (nombre en singular; ver nota de convención más abajo), montado en `app.js:32`.
+- [~] `GET /api/products` — versión básica funcionando end-to-end con datos reales de Mongo. → falta agregar `limit`/`page`/`query`/`sort` y el formato de respuesta exacto (items siguientes).
 - [ ] `GET /api/products` con `limit` (default 10) y `page` (default 1).
 - [ ] `GET /api/products` con `query` (categoría o disponibilidad).
 - [ ] `GET /api/products` con `sort` (asc/desc por precio).
-- [ ] Formato de respuesta exacto (`status`, `payload`, `totalPages`, `prevPage`, `nextPage`, `page`, `hasPrevPage`, `hasNextPage`, `prevLink`, `nextLink`).
+- [ ] Formato de respuesta exacto (`status`, `payload`, `totalPages`, `prevPage`, `nextPage`, `page`, `hasPrevPage`, `hasNextPage`, `prevLink`, `nextLink`). → hoy el controller devuelve `{status, payload}` nomás, y `status` todavía dice `"ok"` en vez del string literal `"success"` que exige la consigna.
 - [ ] `GET /api/products/:pid`.
 - [ ] `POST /api/products` con ID autogenerado.
 - [ ] `PUT /api/products/:pid` sin permitir modificar el ID.
 - [ ] `DELETE /api/products/:pid`.
+
+**Nota de convención:** `product.router.js` quedó en singular, mientras que el router de vistas es `views.router.js` (plural). Igual que `product.model.js`/`product.dao.js`, que ya están en singular — conviene mantener singular para el router de carritos también (`cart.router.js`) por consistencia.
 
 ### Fase 3 — API de carritos
 
@@ -250,14 +254,14 @@ Estado verificado contra el código el **10/08/2026**.
 - **Versiones del stack (04/08/2026):** se baja a **Express 4 + Mongoose 8**, para alinearse con el material del curso y garantizar la compatibilidad de `mongoose-paginate-v2`. Ver hallazgo 6.
 - **Datos semilla:** se reutiliza `CODER/CoderJavaScript/data/juegos.json` (10 juegos de PS2), mapeando los campos del español a los nombres que exige la consigna. Ver hallazgo 3.
 - **FileSystem:** no existía; se escribe desde cero como implementación paralela a conservar (requisito 20).
+- **URI de Mongo: local, no Atlas** (decidido el 10/08/2026). El `mongoose.connect('mongodb://127.0.0.1:27017/ecommerce')` de `app.js` queda como está. Sigue pendiente sacar la URI hardcodeada del código a `.env` (con `dotenv` o `--env-file` de Node) antes de sacar capturas del código para el Slides, y agregar `.env` al `.gitignore` (hallazgo 12).
+- **Arquitectura de capas: router → controller → dao → modelo** (decidido el 10/08/2026, 3 capas). El router solo define método + ruta y apunta a una función del controller; el controller lee `req`/`res` (params, query, body), llama al dao, decide status codes y arma la respuesta; el dao es el único que importa los modelos de Mongoose y habla con la base. Falta crear la carpeta `src/controllers/` (no existe todavía) y aplicar este esquema tanto a `/api/products`/`/api/carts` como, más adelante, a `views.router.js`.
 
 ### Decisiones pendientes (a resolver con Juan Carlos, no asumir)
 
 - [ ] **Nombre comercial, problema que resuelve y público objetivo** del e-commerce — la temática está clara (juegos de PS2), la definición para la slide 1 no.
 - [ ] **Estrategia de paginación**: `mongoose-paginate-v2` está **instalado** pero todavía no se usa; falta decidir entre ese plugin (devuelve casi todas las claves del formato exigido) o armar la query a mano. Ojo: ni el plugin ni Mongo generan `prevLink`/`nextLink` — esos se arman siempre a mano.
-- [ ] **Arquitectura de capas**: la consigna menciona `dao` y `models` y habla de "controllers" en el Slides; el reparto exacto de responsabilidades (router / controller / service / dao) queda por definir. Hoy no hay ninguna capa: `views.router.js` tiene los datos hardcodeados adentro.
 - [ ] **Cómo convive FileSystem con MongoDB** (dos DAOs seleccionables, o FileSystem conservado como implementación histórica) — pendiente, y además hay que **recuperar** esa implementación (hallazgo 3).
-- [ ] **Manejo de la URI de Mongo**: local vs. Atlas, y si va por `.env` (haría falta agregar `dotenv` o usar `--env-file` de Node) o hardcodeada. La rúbrica penaliza credenciales en el código.
 - [ ] **Convenciones de respuestas de error** (forma del JSON de error, códigos HTTP por caso) — a documentar acá cuando se decidan.
 
 ---
