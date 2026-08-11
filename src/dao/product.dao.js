@@ -5,8 +5,8 @@ export class ProductoDao{
         this.model = model;
     }
 
-    async getAll(){
-        return await this.model.find()
+    async getAll(queryFilter, options){
+        return await this.model.paginate(queryFilter, options)
     }
 
     async getById(id){

@@ -30,7 +30,7 @@ Proyecto final de curso: **API + aplicación web de e-commerce** desarrollada co
 - **Temática / nombre del proyecto:** _sin confirmar formalmente_. El código apunta a una **tienda de videojuegos retro de PlayStation 2** (título de la página: "Tienda PS2 - Node.js", logo de PS2, catálogo con GTA: San Andreas y Resident Evil 4). Falta definir nombre comercial, problema que resuelve y público objetivo — los pide la slide 1.
 - **Repositorio:** https://github.com/Juanrar/CoderBackend1 (rama `main`).
 - **Entregable final:** Google Slides con URL pública _(a completar)_
-- **Estado (10/08/2026):** maqueta de front funcionando (Express + Handlebars + Socket.IO levantando en 8080 con datos hardcodeados). Arrancó la persistencia: hay un primer modelo de Mongoose (`src/models/product.model.js`) y `app.js` ya llama a `mongoose.connect(...)`, pero **ninguno de los dos cambios está commiteado todavía** y sigue sin existir la API (`/api/products`, `/api/carts`) ni la capa `dao` (la carpeta existe pero sigue vacía). Ver sección 7 para la auditoría detallada.
+- **Estado (11/08/2026):** el CRUD completo de **productos** ya está de punta a punta y **commiteado**: `GET /api/products`, `GET /api/products/:id`, `POST /api/products`, `PUT /api/products/:id` y `DELETE /api/products/:id` funcionan contra Mongo, con validaciones básicas y manejo de errores (`CastError`, `E11000` duplicado, `ValidationError`) en `producto.controller.js`. **`GET /api/products` quedó 100% alineado con la consigna**: `limit`/`page`/`query`/`sort` funcionando y el formato de respuesta exacto (incluyendo `prevLink`/`nextLink` calculados dinámicamente). Sigue faltando: **toda la API de carritos** (no existe `cart.model.js`, `cart.dao.js`, `cart.controller.js` ni `cart.router.js`) — es el próximo bloque grande. Las vistas y WebSockets siguen sin tocarse desde la última auditoría (datos hardcodeados, links rotos, saludo de prueba nomás). Ver sección 7 para la auditoría detallada.
 - **Nota sobre este archivo:** el archivo se llamaba `AGENT.md` y fue renombrado a `CLAUDE.md` en el commit `1eca14d` — el renombre **sí está commiteado**, a diferencia de lo que decía una versión anterior de esta nota. Tampoco se encontró ya una copia duplicada en `Escritorio\CLAUDE.md`: si existió, ya no está.
 
 ---
@@ -158,33 +158,32 @@ Estado verificado contra el código el **10/08/2026**.
 - [~] `.gitignore` con `node_modules` y variables de entorno. → solo ignora `node_modules`; **falta `.env`**.
 - [~] `package.json` con dependencias y scripts de arranque. → existe con script `dev` (`nodemon src/app.js`); falta `start`, y hay dependencias basura (ver sección 7, hallazgo 4).
 - [x] Servidor Express levantando en el **puerto 8080**. → `src/app.js:29`.
-- [~] Estructura de carpetas definida, incluyendo **`dao`** y **`models`**. → `src/models/` ya existe **en plural** (correcto según consigna) con un primer archivo, `product.model.js`. `src/dao/` sigue vacía. Como `models/` ya tiene contenido, `git status` la detecta como carpeta nueva (`??`), pero **todavía no está agregada ni commiteada**.
-- [~] Conexión a MongoDB (base **`ecommerce`**) verificada. → `app.js` ya tiene `mongoose.connect('mongodb://127.0.0.1:27017/ecommerce')` con `.then`/`.catch`, pero es un cambio **sin commitear** (`git status` lo marca `modified`) y todavía no se confirmó levantando el server con Mongo corriendo. Falta: commitear y verificar en consola/Compass que la conexión funciona y que la base `ecommerce` se crea.
+- [~] Estructura de carpetas definida, incluyendo **`dao`** y **`models`**. → `src/models/`, `src/dao/` y `src/controllers/` existen y están commiteadas, pero solo tienen los archivos de **producto** (`product.model.js`, `product.dao.js`, `producto.controller.js`). Falta el trío equivalente de **carrito**.
+- [x] Conexión a MongoDB (base **`ecommerce`**) verificada. → `app.js` tiene `mongoose.connect('mongodb://127.0.0.1:27017/ecommerce')` commiteado (commit `60be6ba`) y ya probado end-to-end: el CRUD de productos lee y escribe contra esa base.
 - [ ] Decidir dónde vive la implementación previa de **FileSystem** para conservarla sin romper la nueva. → **no hay rastro de FileSystem en el repo** (ver sección 7, hallazgo 3).
 
 ### Fase 1 — Modelado y persistencia
 
-- [x] Modelo de **producto** en Mongoose con los campos exigidos (`title`, `description`, `code`, `price`, `status`, `stock`, `category`, `thumbnails`). → escrito en `src/models/product.model.js` como `ProductoModel` (export con nombre), con los 8 campos pedidos más `developer` y `releaseYear` (extra, vienen de los datos semilla) y `status` como `Boolean` con `default: true`. Ya confirmado funcionando de punta a punta vía `GET /api/products`. Sin commitear todavía.
+- [x] Modelo de **producto** en Mongoose con los campos exigidos (`title`, `description`, `code`, `price`, `status`, `stock`, `category`, `thumbnails`). → escrito en `src/models/product.model.js` como `ProductoModel` (export con nombre), con los 8 campos pedidos más `developer` y `releaseYear` (extra, vienen de los datos semilla) y `status` como `Boolean` con `default: true`. Commiteado (`629bc12`) y probado con el CRUD completo, no solo `GET`.
 - [ ] Modelo de **carrito** en Mongoose, con referencia a productos que habilite `populate`.
-- [~] Colecciones `products` y `carts` creadas y con datos de prueba. → `products` ya tiene datos reales (se están leyendo desde `GET /api/products`); `carts` todavía no existe.
-- [x] Capa **`dao`** implementada (acceso a datos separado de la lógica de rutas). → `src/dao/product.dao.js`, clase `ProductoDao` que recibe el modelo por constructor. Falta el dao de carritos.
-- [x] Capa **`controllers`** implementada (decidido usar 3 capas — ver sección 6). → `src/controllers/producto.controller.js`, clase `ProductoController`. Falta el controller de carritos.
+- [~] Colecciones `products` y `carts` creadas y con datos de prueba. → `products` ya tiene datos reales (se están leyendo/creando/editando/borrando desde la API); `carts` todavía no existe.
+- [~] Capa **`dao`** implementada (acceso a datos separado de la lógica de rutas). → `src/dao/product.dao.js`, clase `ProductoDao` que recibe el modelo por constructor, con `getAll/getById/create/delete/update`. Falta el dao de carritos.
+- [~] Capa **`controllers`** implementada (decidido usar 3 capas — ver sección 6). → `src/controllers/producto.controller.js`, clase `ProductoController` con los 5 métodos CRUD y manejo de errores (`CastError`, `E11000`, `ValidationError`). Falta el controller de carritos.
 - [ ] Implementación de FileSystem conservada y funcional/documentada.
 
 ### Fase 2 — API de productos
 
-> Estado (10/08/2026): **arrancó de punta a punta.** Cadena completa `product.router.js` → `producto.controller.js` (`ProductoController`) → `product.dao.js` (`ProductoDao`) → `product.model.js` (`ProductoModel`) → Mongo, montada en `app.js` bajo `/api/products`. `GET /api/products` (versión básica, sin filtros/paginación todavía) ya devuelve datos reales de la colección. Nada de esto está commiteado todavía.
+> Estado (11/08/2026): **`GET /api/products` cerrado del todo** — parámetros, filtro y formato de respuesta exacto. Cadena completa `product.router.js` → `producto.controller.js` (`ProductoController`) → `product.dao.js` (`ProductoDao`) → `product.model.js` (`ProductoModel`) → Mongo, montada en `app.js` bajo `/api/products`. Los 5 métodos (`getAll`, `getById`, `create`, `update`, `delete`) están escritos y commiteados (`9a44039`, `67f3931`, `b0dca02`, `7bf0c35`).
 
 - [x] Router de `/api/products` con **Express Router**. → `src/routes/product.router.js` (nombre en singular; ver nota de convención más abajo), montado en `app.js:32`.
-- [~] `GET /api/products` — versión básica funcionando end-to-end con datos reales de Mongo, con `try/catch` propio (200/500). → falta agregar `limit`/`page`/`query`/`sort` y el formato de respuesta exacto (items siguientes).
-- [ ] `GET /api/products` con `limit` (default 10) y `page` (default 1).
-- [ ] `GET /api/products` con `query` (categoría o disponibilidad).
-- [ ] `GET /api/products` con `sort` (asc/desc por precio).
-- [ ] Formato de respuesta exacto (`status`, `payload`, `totalPages`, `prevPage`, `nextPage`, `page`, `hasPrevPage`, `hasNextPage`, `prevLink`, `nextLink`). → hoy el controller devuelve `{status, payload}` nomás. El string `"success"` ya quedó bien (se corrigió el `"ok"` inicial).
+- [x] `GET /api/products` con `limit` (default 10) y `page` (default 1). → implementado con `mongoose-paginate-v2` (`productoSchema.plugin(mongoosePaginate)` en el modelo, `this.model.paginate(filter, options)` en el dao). Verificado con datos reales: 11 documentos, `limit=10` → 2 páginas.
+- [x] `GET /api/products` con `query` (categoría o disponibilidad). → un solo parámetro `req.query.query` (`term`) decide: valores reservados `'available'`/`'unavailable'` filtran por `stock` (`$gte 1` / `$lt 1`); cualquier otro valor no vacío se interpreta como `category`. Decisión de diseño anotada en sección 6.
+- [x] `GET /api/products` con `sort` (asc/desc por precio). → `sort.price = 1` / `-1` según `req.query.sort === 'asc'/'desc'`, pasado como `options.sort` a `.paginate()`.
+- [x] Formato de respuesta exacto (`status`, `payload`, `totalPages`, `prevPage`, `nextPage`, `page`, `hasPrevPage`, `hasNextPage`, `prevLink`, `nextLink`). → aplanado correctamente (`payload` es `response.docs`, el resto de las claves de paginación al mismo nivel que `status`) y `prevLink`/`nextLink` ya se calculan con la función auxiliar `buildLink(baseUrl, currentParams, targetPage)` (usa `URLSearchParams` sobre `req.query` para conservar `limit`/`query`/`sort` al cambiar de página, y devuelve `null` cuando no hay página destino).
 - [x] `GET /api/products/:pid`. → funcionando con manejo de casos borde: `200` (encontrado), `404` (id válido pero inexistente), `400` (`CastError`, formato de id inválido), `500` (otro error). Usa `:id` como nombre de parámetro en vez de `:pid` (ver nota de convención).
-- [ ] `POST /api/products` con ID autogenerado.
-- [ ] `PUT /api/products/:pid` sin permitir modificar el ID.
-- [ ] `DELETE /api/products/:pid`.
+- [x] `POST /api/products` con ID autogenerado. → valida campos obligatorios (`code`, `title`, `price`) y tipos de `price`/`stock`, maneja `E11000` (código duplicado) y `ValidationError`. El ID lo autogenera Mongo (`_id`), no se toca a mano.
+- [x] `PUT /api/products/:pid` sin permitir modificar el ID. → el controller borra explícitamente `_id`, `id` y `code` del body antes de actualizar (`producto.controller.js:110-112`), así que el ID (y el código) nunca cambian vía este endpoint. Ruta cambiada de `PATCH` a `PUT` en el último commit (`7bf0c35`), como pide la consigna.
+- [x] `DELETE /api/products/:pid`. → devuelve 404 si no existe, 400 si el id tiene formato inválido, 200 con el producto borrado si sale bien.
 
 **Nota de convención:** `product.router.js` quedó en singular, mientras que el router de vistas es `views.router.js` (plural). Igual que `product.model.js`/`product.dao.js`, que ya están en singular — conviene mantener singular para el router de carritos también (`cart.router.js`) por consistencia.
 
@@ -256,11 +255,12 @@ Estado verificado contra el código el **10/08/2026**.
 - **FileSystem:** no existía; se escribe desde cero como implementación paralela a conservar (requisito 20).
 - **URI de Mongo: local, no Atlas** (decidido el 10/08/2026). El `mongoose.connect('mongodb://127.0.0.1:27017/ecommerce')` de `app.js` queda como está. Sigue pendiente sacar la URI hardcodeada del código a `.env` (con `dotenv` o `--env-file` de Node) antes de sacar capturas del código para el Slides, y agregar `.env` al `.gitignore` (hallazgo 12).
 - **Arquitectura de capas: router → controller → dao → modelo** (decidido el 10/08/2026, 3 capas). El router solo define método + ruta y apunta a una función del controller; el controller lee `req`/`res` (params, query, body), llama al dao, decide status codes y arma la respuesta; el dao es el único que importa los modelos de Mongoose y habla con la base. Falta crear la carpeta `src/controllers/` (no existe todavía) y aplicar este esquema tanto a `/api/products`/`/api/carts` como, más adelante, a `views.router.js`.
+- **Paginación: `mongoose-paginate-v2`, no `skip`/`limit` a mano** (decidido el 11/08/2026). El schema de producto tiene `productoSchema.plugin(mongoosePaginate)` y el dao llama `this.model.paginate(filter, options)`. `prevLink`/`nextLink` los arma la función auxiliar `buildLink()` en `producto.controller.js` con `URLSearchParams` sobre `req.query`, para no perder los demás params al cambiar de página.
+- **Filtro `query` de `GET /api/products`: valores reservados, no un segundo parámetro** (decidido el 11/08/2026). Un único `req.query.query` decide el campo a filtrar: `'available'`/`'unavailable'` filtran por `stock` (`$gte 1` / `$lt 1`); cualquier otro valor no vacío se trata como `category`. Se eligió este camino (frente a comparar contra `distinct('category')` en la base) por ser mucho menos código para el volumen de datos del proyecto (10-20 productos). Documentar en el Slides qué valores exactos aceptás para "disponible"/"no disponible" al mostrar las capturas.
 
 ### Decisiones pendientes (a resolver con Juan Carlos, no asumir)
 
 - [ ] **Nombre comercial, problema que resuelve y público objetivo** del e-commerce — la temática está clara (juegos de PS2), la definición para la slide 1 no.
-- [ ] **Estrategia de paginación**: `mongoose-paginate-v2` está **instalado** pero todavía no se usa; falta decidir entre ese plugin (devuelve casi todas las claves del formato exigido) o armar la query a mano. Ojo: ni el plugin ni Mongo generan `prevLink`/`nextLink` — esos se arman siempre a mano.
 - [ ] **Cómo convive FileSystem con MongoDB** (dos DAOs seleccionables, o FileSystem conservado como implementación histórica) — pendiente, y además hay que **recuperar** esa implementación (hallazgo 3).
 - [ ] **Convenciones de respuestas de error** (forma del JSON de error, códigos HTTP por caso) — a documentar acá cuando se decidan.
 
@@ -268,7 +268,7 @@ Estado verificado contra el código el **10/08/2026**.
 
 ## 7. Auditoría del repositorio (04/08/2026)
 
-### Estructura actual (10/08/2026)
+### Estructura actual (11/08/2026)
 
 ```
 CoderBackend1/
@@ -278,12 +278,15 @@ CoderBackend1/
 ├─ package.json            (dependencias limpias; falta script "start")
 └─ src/
    ├─ app.js               servidor + handlebars + mongoose.connect + socket.io, todo junto
-   │                        (mongoose.connect es cambio SIN COMMITEAR)
-   ├─ dao/                 VACÍA
-   ├─ models/               ← ya en plural
-   │  └─ product.model.js  esquema de producto (SIN COMMITEAR, carpeta untracked)
+   ├─ controllers/
+   │  └─ producto.controller.js   ProductoController: getAll/getById/create/update/delete
+   ├─ dao/
+   │  └─ product.dao.js           ProductoDao: getAll/getById/create/delete/update
+   ├─ models/
+   │  └─ product.model.js         esquema de producto (commiteado)
    ├─ routes/
-   │  └─ views.router.js   GET / y GET /products (datos hardcodeados)
+   │  ├─ product.router.js        /api/products (GET, GET /:id, POST, PUT /:id, DELETE /:id)
+   │  └─ views.router.js          GET / y GET /products (datos hardcodeados)
    ├─ public/
    │  ├─ index.js          solo `const socket = io()` + placeholder de agregar al carrito
    │  ├─ css/styles.css
@@ -295,10 +298,12 @@ CoderBackend1/
       └─ cart.handlebars   (sin ruta que la renderice)
 ```
 
+**Todavía no existe:** nada de carrito (`cart.model.js`, `cart.dao.js`, `cart.controller.js`, `cart.router.js`), ni la implementación FileSystem, ni `.env`.
+
 ### Hallazgos, ordenados por impacto en la nota
 
-1. **Persistencia arrancó, pero sin commitear (bloqueante, 25% + habilita el otro 50%).** Ya existen `mongoose.connect(...)` en `app.js` y un primer esquema en `src/models/product.model.js`, pero ambos cambios están **sin agregar a git** (`git status`: `app.js` modificado, `src/models/` sin trackear). Falta: (a) commitear, (b) confirmar que la conexión levanta contra un Mongo corriendo y crea la base `ecommerce`, (c) escribir el modelo de **carrito** (todavía no existe), (d) construir la capa `dao` sobre estos modelos — la carpeta sigue vacía.
-2. **No existe la API (50% de la nota).** No hay routers `/api/products` ni `/api/carts`; `app.js` solo monta `viewsRouter` en `/`. Los 13 endpoints de la consigna están sin escribir.
+1. ~~**Persistencia arrancó, pero sin commitear.**~~ **RESUELTO.** `mongoose.connect(...)` y `product.model.js` están commiteados y probados de punta a punta con el CRUD de productos. Pendiente dentro de este mismo hallazgo: falta el modelo de **carrito** (no existe) y la capa `dao`/`controller` de carrito (carpetas existen pero solo tienen los archivos de producto).
+2. **La API de productos está completa; la de carritos no existe (50% de la nota).** `GET/POST/PUT/DELETE /api/products` (+`:id`) están escritos, commiteados y con manejo de errores razonable, y `GET /api/products` ya cumple el formato exacto de la consigna (`limit/page/query/sort` + las 10 claves de la respuesta, `prevLink`/`nextLink` incluidos). Falta: los 7 endpoints de `/api/carts`, que hoy no existen en absoluto (ni router, ni controller, ni dao, ni modelo). Es el bloque que más nota mueve de lo que queda pendiente.
 3. **La implementación previa con FileSystem NO EXISTE (requisito 20).** Verificado el 04/08/2026: el "otro proyecto" del commit `95eb629` es `CODER/CoderJavaScript`, que es el **proyecto de frontend** del curso de JavaScript — HTML + CSS + `js/main.js` de navegador, con persistencia en `localStorage`. No tiene Node, ni `require`, ni `fs`, ni Express. De ahí salieron las vistas, el CSS y el logo, nada más. Tampoco hay ningún `ProductManager`/`CartManager` en el resto del disco ni en otra rama. **Conclusión: el `ProductManager` con `fs` hay que escribirlo desde cero.**
    - **Dato aprovechable:** `CoderJavaScript/data/juegos.json` tiene **10 juegos de PS2** con `id`, `titulo`, `categorias`, `precio`, `stock`, `descripcion`, `desarrollador`, `año_lanzamiento`, `imagen_url`. Categorías: Mundo Abierto, Horror, Aventura, Acción, Sigilo, RPG, Carreras. Sirve como semilla tanto para el FileSystem como para la colección `products`, **pero los nombres de campo están en español y no coinciden con los que exige la consigna** — hay que mapearlos (`titulo`→`title`, `precio`→`price`, `imagen_url`→`thumbnails` como *array*, `categorias`→`category`, `id`→`code`) y **falta `status`**. Son 10 documentos: para que la paginación con `limit=10` se note en las capturas conviene llegar a 15-20.
 4. ~~**Dependencias basura en `package.json`.**~~ **RESUELTO.** Ya no están `paginate`/`v2`; queda solo `mongoose-paginate-v2` (todavía sin usar en código) y `nodemon` pasó a `devDependencies`. Sigue faltando el script `start` (solo existe `dev`).
@@ -323,3 +328,5 @@ CoderBackend1/
 - **04/08/2026** — Auditoría inicial del repo y actualización de este documento (secciones 1, 5, 6 y esta). Estado: front maquetado con datos falsos; persistencia y API sin empezar.
 - **04/08/2026 (cont.)** — Se verificó que `CoderJavaScript` es el proyecto de **frontend** del curso de JS, no un backend: **la implementación con FileSystem nunca existió** y hay que escribirla. Se rescató `data/juegos.json` como semilla. Decisión tomada: **bajar a Express 4 + Mongoose 8**. Plan de trabajo acordado: (1) limpiar dependencias, (2) downgrade de versiones, (3) escribir `ProductManager` con `fs.promises` sobre los datos semilla.
 - **10/08/2026** — Nueva auditoría completa contra el estado real del repo (código + `git status` + `git log`), no solo contra lo que decía este documento. Cambios de código detectados, **todavía sin commitear**: `src/model/` fue reemplazado por `src/models/` (ya en plural) con el primer esquema (`product.model.js`, cubre los 8 campos de la consigna más `developer`/`releaseYear`); `app.js` ya llama a `mongoose.connect('mongodb://127.0.0.1:27017/ecommerce')`. Se corrigieron dos notas desactualizadas de este archivo: el renombre `AGENT.md` → `CLAUDE.md` **sí** está commiteado (`1eca14d`), y no se encontró copia duplicada en `Escritorio\CLAUDE.md`. También se confirmó que `package.json` ya no tiene las dependencias basura (`paginate`, `v2`) y que `nodemon` quedó bien ubicado en `devDependencies`. Sin cambios en la API (sigue sin existir ningún router bajo `/api`), en las vistas (siguen con datos hardcodeados y links rotos) ni en WebSockets (sigue solo el saludo de prueba). Próximo paso sugerido: commitear el modelo y la conexión, verificar que Mongo levanta de verdad, y recién después arrancar la capa `dao` y el router de `/api/products`.
+- **11/08/2026** — Auditoría completa del repo (working tree limpio, `git log`, lectura de todos los archivos de `src/`). Desde la última auditoría se completó y commiteó **todo el CRUD de productos**: `create` (`9a44039`), `delete` (`67f3931`), `update` (`b0dca02`, con fix de ruta `PATCH`→`PUT` en `7bf0c35`). El router quedó `GET /`, `GET /:id`, `POST /`, `PUT /:id`, `DELETE /:id`, todo montado en `/api/products`. Sin cambios en: formato de respuesta de `GET /api/products` (sigue sin `limit/page/query/sort` ni las claves de paginación), carritos (nada empezado), vistas (siguen hardcodeadas, links rotos a `/products/:id` y `/carts/TU_ID_DE_CARRITO_AQUI`), WebSockets (solo el saludo de prueba), FileSystem (no existe) y `.env` (no existe, uri sigue hardcodeada en `app.js`). Próximo paso acordado con Juan Carlos: primero cerrar el formato de respuesta de `GET /api/products` (impacto directo en el 50%), después arrancar el modelo/dao/controller/router de carrito.
+- **11/08/2026 (cont.)** — Sesión de trabajo guiada (tutor + Juan Carlos escribiendo el código) para cerrar `GET /api/products` del todo. Se implementó y verificó en vivo: `limit`/`page` con `mongoose-paginate-v2` (plugin agregado al schema, `paginate()` en el dao); filtro `query` con valores reservados `'available'`/`'unavailable'` para disponibilidad y cualquier otro valor como `category`; `sort` asc/desc por precio; formato de respuesta aplanado (`payload` = array, resto de claves al mismo nivel); `prevLink`/`nextLink` calculados con una función auxiliar `buildLink()` basada en `URLSearchParams`. En el camino se encontraron y corrigieron en vivo tres bugs propios: variable `result` no declarada (usaba `response`), parámetro de filtro mal nombrado (`category` en vez de `query`) y un intento de refactor que rompía `sort` al reusar el nombre de la variable desestructurada de `req.query`. **`GET /api/products` queda 100% alineado con la consigna.** Próximo paso acordado: arrancar la API de carritos (modelo con `ref` a producto para habilitar `populate`, dao, controller, router).

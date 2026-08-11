@@ -6,10 +6,48 @@ const ProductoService = new ProductoDao(ProductoModel);
 export class ProductoController{
     static async getAll(req, res){
         try{
-            const response = await ProductoService.getAll()
-            res.status(200).json({status: "success", payload: response})
+            let page = parseInt(req.query.page) || 1
+            let limit = parseInt(req.query.limit) || 10
+            const term = req.query.query;
+            let filter = {};
+
+            if (term === 'available') {
+                filter.stock = { $gte: 1 };
+            } else if (term === 'unavailable') {
+                filter.stock = { $lt: 1 };
+            } else if (term) {
+                filter.category = term;
+            }
+
+            let sort = {}
+            if (req.query.sort === 'asc') {
+                sort.price = 1;  // 1 = Menor a mayor
+            } else if (req.query.sort === 'desc') {
+                sort.price = -1; // -1 = Mayor a menor
+            }
+
+            const options = {
+                page: page,
+                limit: limit,
+                sort: sort
+            }
+
+            const response = await ProductoService.getAll(filter, options)
+            res.status(200).json({ 
+                status: "success", 
+                payload: response.docs,
+                totalPages: response.totalPages,
+                prevPage: response.prevPage,
+                nextPage: response.nextPage,
+                page: response.page,
+                hasPrevPage: response.hasPrevPage,
+                hasNextPage: response.hasNextPage,
+                prevLink:  buildLink(req.baseUrl, req.query, response.prevPage),
+                nextLink:  buildLink(req.baseUrl, req.query, response.nextPage)
+            });
 
         }catch(error){
+            console.log(error)
             res.status(500).json({ status: "error", payload: "Error interno del servidor" });
         }
     }
@@ -161,4 +199,12 @@ export class ProductoController{
             });
         }
     }
+}
+
+function buildLink(baseUrl, currentParams, targetPage) {
+    if (!targetPage) return null;
+
+    const params = new URLSearchParams(currentParams);
+    params.set('page', targetPage);
+    return `${baseUrl}?${params.toString()}`;
 }
