@@ -13,4 +13,13 @@ export class ProductoDao{
             return null
         }
     }
+
+    async getById(id){
+        try{
+            const result = await this.model.findById(id)
+            return result
+        }catch{
+            return null
+        }
+    }
 }

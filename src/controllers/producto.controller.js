@@ -11,4 +11,14 @@ export class ProductoController{
         }
         res.json({status: "success", payload: response})
     }
+
+    static async getById(req, res){
+        const { id } = req.params
+
+        const response = await ProductoService.getById(id)
+        if (!response ){
+            return res.json({status: "fail", payload: "product id not found"})
+        }
+        res.json({status: "success", payload: response})
+    }
 }
