@@ -12,4 +12,9 @@ export class ProductoDao{
     async getById(id){
         return await this.model.findById(id)
     }
+
+    async create(producto){
+        return await this.model.create(producto)
+    }
+
 }

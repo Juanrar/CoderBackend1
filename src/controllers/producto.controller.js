@@ -31,4 +31,53 @@ export class ProductoController{
             res.status(500).json({ status: "error", payload: "Error interno del servidor" })
         }
     }
+
+    static async create(req, res){
+        try {
+            const { code, title, category, price, stock, description, developer, releaseYear, thumbnails } = req.body;
+
+            if (!code || !title || price === undefined) {
+                return res.status(400).json({ 
+                    status: "error", 
+                    payload: "Faltan campos obligatorios. Se requiere 'code', 'title' y 'price'." 
+                });
+            }
+
+            if (typeof price !== 'number' || price < 0) {
+                return res.status(400).json({ status: "error", payload: "El precio debe ser un número mayor o igual a 0." });
+            }
+            if (stock !== undefined && (typeof stock !== 'number' || stock < 0)) {
+                return res.status(400).json({ status: "error", payload: "El stock debe ser un número mayor o igual a 0." });
+            }
+
+            const newProduct = await ProductoService.create(req.body);
+
+            res.status(201).json({ status: "success", payload: newProduct });
+
+        } catch (error) {
+            if (error.code === 11000) {
+                return res.status(409).json({ 
+                    status: "error", 
+                    payload: `El código de producto '${error.keyValue.code}' ya existe. Debe ser único.` 
+                });
+            }
+
+            if (error.name === 'ValidationError') {
+                return res.status(400).json({ 
+                    status: "error", 
+                    payload: "Error de formato en los datos enviados.",
+                    details: error.message 
+                });
+            }
+            res.status(500).json({ status: "error", payload: "Error interno del servidor al crear el producto" });
+        }
+    }
+
+    static async delete(req, res){
+
+    }
+
+    static async patch(req, res){
+
+    }
 }
