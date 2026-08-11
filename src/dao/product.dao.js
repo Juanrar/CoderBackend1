@@ -6,20 +6,10 @@ export class ProductoDao{
     }
 
     async getAll(){
-        try{
-            const result = await this.model.find()
-            return result
-        }catch{
-            return null
-        }
+        return await this.model.find()
     }
 
     async getById(id){
-        try{
-            const result = await this.model.findById(id)
-            return result
-        }catch{
-            return null
-        }
+        return await this.model.findById(id)
     }
 }

@@ -176,12 +176,12 @@ Estado verificado contra el código el **10/08/2026**.
 > Estado (10/08/2026): **arrancó de punta a punta.** Cadena completa `product.router.js` → `producto.controller.js` (`ProductoController`) → `product.dao.js` (`ProductoDao`) → `product.model.js` (`ProductoModel`) → Mongo, montada en `app.js` bajo `/api/products`. `GET /api/products` (versión básica, sin filtros/paginación todavía) ya devuelve datos reales de la colección. Nada de esto está commiteado todavía.
 
 - [x] Router de `/api/products` con **Express Router**. → `src/routes/product.router.js` (nombre en singular; ver nota de convención más abajo), montado en `app.js:32`.
-- [~] `GET /api/products` — versión básica funcionando end-to-end con datos reales de Mongo. → falta agregar `limit`/`page`/`query`/`sort` y el formato de respuesta exacto (items siguientes).
+- [~] `GET /api/products` — versión básica funcionando end-to-end con datos reales de Mongo, con `try/catch` propio (200/500). → falta agregar `limit`/`page`/`query`/`sort` y el formato de respuesta exacto (items siguientes).
 - [ ] `GET /api/products` con `limit` (default 10) y `page` (default 1).
 - [ ] `GET /api/products` con `query` (categoría o disponibilidad).
 - [ ] `GET /api/products` con `sort` (asc/desc por precio).
-- [ ] Formato de respuesta exacto (`status`, `payload`, `totalPages`, `prevPage`, `nextPage`, `page`, `hasPrevPage`, `hasNextPage`, `prevLink`, `nextLink`). → hoy el controller devuelve `{status, payload}` nomás, y `status` todavía dice `"ok"` en vez del string literal `"success"` que exige la consigna.
-- [ ] `GET /api/products/:pid`.
+- [ ] Formato de respuesta exacto (`status`, `payload`, `totalPages`, `prevPage`, `nextPage`, `page`, `hasPrevPage`, `hasNextPage`, `prevLink`, `nextLink`). → hoy el controller devuelve `{status, payload}` nomás. El string `"success"` ya quedó bien (se corrigió el `"ok"` inicial).
+- [x] `GET /api/products/:pid`. → funcionando con manejo de casos borde: `200` (encontrado), `404` (id válido pero inexistente), `400` (`CastError`, formato de id inválido), `500` (otro error). Usa `:id` como nombre de parámetro en vez de `:pid` (ver nota de convención).
 - [ ] `POST /api/products` con ID autogenerado.
 - [ ] `PUT /api/products/:pid` sin permitir modificar el ID.
 - [ ] `DELETE /api/products/:pid`.
