@@ -74,10 +74,36 @@ export class ProductoController{
     }
 
     static async delete(req, res){
-
+        const { id } = req.params;
+        try{
+            const deletedProduct = await ProductoService.delete(id);
+            if (!deletedProduct) {
+                return res.status(404).json({ 
+                    status: "fail", 
+                    payload: "No se encontró el producto a eliminar" 
+                });
+            }
+            res.status(200).json({ 
+                status: "success", 
+                payload: "Producto eliminado correctamente",
+                deleted: deletedProduct
+            });
+        }catch(error){
+            if(error.name === 'CastError'){
+                return res.status(400).json({
+                    status: "error", 
+                    payload: "Formato de ID inválido"  
+                })
+            }
+            console.log(error)
+            res.status(500).json({ 
+                status: "error", 
+                payload: "Error interno del servidor al eliminar el producto" 
+            });
+        }
     }
 
-    static async patch(req, res){
+    static async put(req, res){
 
     }
 }

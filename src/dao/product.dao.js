@@ -17,4 +17,8 @@ export class ProductoDao{
         return await this.model.create(producto)
     }
 
+    async delete(id){
+        return await this.model.findByIdAndDelete(id)
+    }
+
 }
