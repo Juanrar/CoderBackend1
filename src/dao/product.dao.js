@@ -21,4 +21,7 @@ export class ProductoDao{
         return await this.model.findByIdAndDelete(id)
     }
 
+    async update(id, updateData){
+        return await this.model.findByIdAndUpdate(id, updateData, { new: true });
+    }
 }

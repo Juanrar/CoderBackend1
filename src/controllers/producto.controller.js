@@ -103,7 +103,58 @@ export class ProductoController{
         }
     }
 
-    static async put(req, res){
+    static async update(req, res) {
+        const { id } = req.params;
+        const updateData = req.body;
+        
+        try {
+            if (Object.keys(updateData).length === 0) {
+                return res.status(400).json({ 
+                    status: "error", 
+                    payload: "No se enviaron datos para actualizar" 
+                });
+            }
 
+            if (updateData.price !== undefined && (typeof updateData.price !== 'number' || updateData.price < 0)) {
+                return res.status(400).json({ status: "error", payload: "El precio debe ser un número mayor o igual a 0." });
+            }
+            if (updateData.stock !== undefined && (typeof updateData.stock !== 'number' || updateData.stock < 0)) {
+                return res.status(400).json({ status: "error", payload: "El stock debe ser un número mayor o igual a 0." });
+            }
+
+            const updatedProduct = await ProductoService.update(id, updateData);
+            
+            if (!updatedProduct) {
+                return res.status(404).json({ 
+                    status: "fail", 
+                    payload: "No se encontró el producto a actualizar" 
+                });
+            }
+            
+            res.status(200).json({ 
+                status: "success", 
+                payload: updatedProduct 
+            });
+        } catch (error) {
+            if (error.name === 'CastError') {
+                return res.status(400).json({ 
+                    status: "error", 
+                    payload: "Formato de ID inválido" 
+                });
+            }
+
+            if (error.code === 11000) {
+                return res.status(409).json({ 
+                    status: "error", 
+                    payload: `El código de producto '${error.keyValue.code}' ya está en uso por otro producto.` 
+                });
+            }
+            
+            console.error("Error en ProductoController.update:", error);
+            res.status(500).json({ 
+                status: "error", 
+                payload: "Error interno del servidor al actualizar el producto" 
+            });
+        }
     }
 }
