@@ -115,7 +115,7 @@ export class CartController{
         const { quantity } = req.body;
 
         try{
-            if(quantity < 0){
+            if(quantity === undefined || quantity < 0){
                 return res.status(400).json({ status: "error", payload: "Debe enviar una cantidad numérica mayor o igual a cero" });
             }
 
