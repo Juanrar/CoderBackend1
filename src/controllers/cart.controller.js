@@ -26,7 +26,7 @@ export class CartController{
     static async getById(req, res){
         const { id } = req.params
         try{
-            const response = await CartService.getById(id)
+            const response = await CartService.getPopulatedById(id)
             if (!response ){
                 return res.status(404).json({status: "fail", payload: "Carrito no encontrado"})
             }

@@ -12,6 +12,10 @@ export class CartDao{
     }
 
     async getById(id){
+        return await this.model.findById(id)
+    }
+
+    async getPopulatedById(id) {
         return await this.model.findById(id).populate('products.product')
     }
 
