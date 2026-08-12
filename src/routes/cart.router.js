@@ -5,9 +5,11 @@ const router = Router();
 
 router.post('/', CartController.create)
 router.get('/',CartController.getAll)
-router.get('/:id',CartController.getById)
+router.get('/:cid',CartController.getById)
 router.post('/:cid/products/:pid',CartController.addProduct)
-
-
+router.delete('/:cid/products/:pid',CartController.removeProduct)
+router.put('/:cid',CartController.updateCart)
+router.put('/:cid/products/:pid',CartController.removeProduct)
+router.delete('/:cid',CartController.clearCart)
 
 export default router;
