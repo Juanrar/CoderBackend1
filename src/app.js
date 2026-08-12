@@ -4,6 +4,8 @@ import { Server } from 'socket.io';
 import { engine } from 'express-handlebars';
 import viewsRouter from './routes/views.router.js'
 import productsRouter from './routes/product.router.js'
+import cartRouter from './routes/cart.router.js'
+
 
 const app =  express();
 
@@ -30,6 +32,8 @@ app.use('/', viewsRouter);
 
 // Rutas Producto
  app.use('/api/products', productsRouter)
+ app.use('/api/cart', cartRouter)
+
 
 const serverExp = app.listen(8080, () => {
     console.log("Servidor ON en puerto 8080");

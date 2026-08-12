@@ -58,7 +58,7 @@ export class ProductoController{
             const response = await ProductoService.getById(id)
 
             if (!response ){
-                return res.status(404).json({status: "fail", payload: "product id not found"})
+                return res.status(404).json({status: "fail", payload: "Producto no encontrado"})
             }
             res.status(200).json({status: "success", payload: response})
         }catch(error){

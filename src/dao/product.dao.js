@@ -1,5 +1,3 @@
-
-
 export class ProductoDao{
     constructor(model){
         this.model = model;
